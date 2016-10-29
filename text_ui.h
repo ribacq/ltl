@@ -20,6 +20,7 @@
 
 ///\brief Names for the color pairs
 typedef enum {
+	CP_NULL,
 	CP_DEF,
 	CP_WALL,
 	CP_PLAYER,

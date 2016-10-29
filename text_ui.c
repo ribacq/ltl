@@ -12,6 +12,7 @@ UI *ui_init(){
 	UI *ui = (UI *) malloc(sizeof(UI));
 	ui->main_win = newwin(LINES, COLS, 0, 0);
 	keypad(ui->main_win, TRUE);	//Enable special keys
+	nodelay(ui->main_win, TRUE);    //Don’t block for user input
 	ui->signal = CONTINUE;
 	
 	//Colors
@@ -21,9 +22,9 @@ UI *ui_init(){
 		exit(1);
 	}
 	start_color();
-	init_pair(CP_DEF,	COLOR_BLACK,	COLOR_WHITE);
-	init_pair(CP_WALL,	COLOR_CYAN,	COLOR_BLUE);
-	init_pair(CP_PLAYER,	COLOR_BLACK,	COLOR_GREEN);
+	init_pair(CP_DEF,	COLOR_WHITE,	COLOR_WHITE);
+	init_pair(CP_WALL,	COLOR_BLACK,	COLOR_BLACK);
+	init_pair(CP_PLAYER,	COLOR_WHITE,	COLOR_BLUE);
 	init_pair(CP_END,	COLOR_YELLOW,	COLOR_RED);
 
 	//Display
@@ -50,13 +51,6 @@ void ui_clear(UI *ui){
 //Board
 ///\brief Prints board properly
 void print_board(UI *ui, Board *b){
-	//Characters to display
-	char corner_c = ' ';
-	char horiz_str[] = "  ";
-	char vert_c = ' ';
-	char end_str[] = "!!";
-	char fill_c = ':';
-
 	//Clean and set attributes
 	ui_clear(ui);
 
@@ -65,48 +59,45 @@ void print_board(UI *ui, Board *b){
 	for(i=0; i<b->h; i++){
 		for(j=0; j<b->w; j++){
 			wattrset(ui->main_win, COLOR_PAIR(CP_WALL));
-			mvwaddch(ui->main_win, 2*i, 3*j, corner_c);
+			mvwaddch(ui->main_win, 2*i, 3*j, ' ');
 			if(b->cells[i][j].top){
 				wattrset(ui->main_win, COLOR_PAIR(CP_WALL));
-				mvwaddstr(ui->main_win, 2*i, 3*j+1, horiz_str);
 			}else{
-				wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER) | A_REVERSE);
-				mvwprintw(ui->main_win, 2*i, 3*j+1, "%c%c", fill_c, fill_c);
+				wattrset(ui->main_win, COLOR_PAIR(CP_DEF));
 			}
+			mvwprintw(ui->main_win, 2*i, 3*j+1, "  ");
 			
 			if(b->cells[i][j].left){
 				wattrset(ui->main_win, COLOR_PAIR(CP_WALL));
-				mvwaddch(ui->main_win, 2*i+1, 3*j, vert_c);
 			}else{
-				wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER) | A_REVERSE);
-				mvwaddch(ui->main_win, 2*i+1, 3*j, fill_c);
+				wattrset(ui->main_win, COLOR_PAIR(CP_DEF));
 			}
+			mvwaddch(ui->main_win, 2*i+1, 3*j, ' ');
 
 			if(!is_alone(b, new_yx(i, j))){
-				wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER) | A_REVERSE);
-				mvwprintw(ui->main_win, 2*i+1, 3*j+1, "%c%c", fill_c, fill_c);
+				wattrset(ui->main_win, COLOR_PAIR(CP_DEF));
 			}else{
 				wattrset(ui->main_win, COLOR_PAIR(CP_WALL));
-				mvwprintw(ui->main_win, 2*i+1, 3*j+1, "  ");
 			}
+			mvwprintw(ui->main_win, 2*i+1, 3*j+1, "  ");
 		}
 		//Wall on right of board
 		wattrset(ui->main_win, COLOR_PAIR(CP_WALL));
-		mvwaddch(ui->main_win, 2*i, 3*b->w, corner_c);
-		mvwaddch(ui->main_win, 2*i+1, 3*b->w, vert_c);
+		mvwaddch(ui->main_win, 2*i, 3*b->w, ' ');
+		mvwaddch(ui->main_win, 2*i+1, 3*b->w, ' ');
 	}
 
 	//Wall down of board
 	for(j=0; j<b->w; j++){
-		mvwprintw(ui->main_win, 2*b->h, 3*j, "%c%s", corner_c, horiz_str);
+		mvwprintw(ui->main_win, 2*b->h, 3*j, "   ");
 	}
 
 	//Bottom-right corner
-	mvwaddch(ui->main_win, 2*b->h, 3*b->w, corner_c);
+	mvwaddch(ui->main_win, 2*b->h, 3*b->w, ' ');
 
 	//Mark goal
 	wattrset(ui->main_win, COLOR_PAIR(CP_END));
-	mvwaddstr(ui->main_win, 2*b->end.y+1, 3*b->end.x+1, end_str);
+	mvwaddstr(ui->main_win, 2*b->end.y+1, 3*b->end.x+1, "  ");
 
 	//Display this
 	wrefresh(ui->main_win);
@@ -134,7 +125,7 @@ Direction get_user_input(UI *ui){
 ///\brief Erases Player from screen
 void erase_player(UI* ui, Player *plr){
 	if(plr->nb_steps % 100){
-		wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER) | A_REVERSE);
+		wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER));
 		mvwprintw(ui->main_win, 2*plr->c.y+1, 3*plr->c.x+1, "  ");
 	}else{
 		wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER));
@@ -153,7 +144,7 @@ void print_player(UI* ui, Player *plr){
 ///\brief Erases filling between unvisited cells
 void erase_fill(UI *ui, Yx c, Direction dir){
 	//Correct input
-	wattrset(ui->main_win, COLOR_PAIR(CP_DEF));
+	wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER));
 	switch(dir){
 	case LEFT:
 		mvwaddch(ui->main_win, 2*c.y+1, 3*c.x, ' ');

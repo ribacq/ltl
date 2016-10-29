@@ -104,6 +104,7 @@ int main(int argc, char *argv[]){
 			}while(get_wall(b, plr->c, next) && next != opposite_dir(dir));
 			dir = next;
 			nanosleep(&lag, NULL);
+			get_user_input(ui);
 		}
 		//Make move
 		move_player(ui, b, plr, dir);
