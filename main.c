@@ -31,19 +31,23 @@
 int main(int argc, char *argv[]){
 	//Parameters that can be modified with the command-line parameters
 	UI* ui = ui_init();
+	
 	//Board height and width
 	int h, w;
 	Yx start;
 	h = (getmaxy(ui->main_win)-1)/2;
 	w = (getmaxx(ui->main_win)-1)/3;
+	
 	//Played by human or robot and robot lag
 	bool robot = false;
 	struct timespec lag;
 	lag.tv_sec = 0;
 	lag.tv_nsec = 1e8;
-	//Board random seed
-	srand(time(NULL));
-	int seed = rand();
+	
+	//Board random seed and algorithm
+	int seed = time(NULL);
+	GenAlgo alg = SIMUL;
+	
 	//Read throught parameters
 	int i=1;
 	while(i<argc){
@@ -55,13 +59,22 @@ int main(int argc, char *argv[]){
 		}else if(!strcmp(argv[i], "-w") || !strcmp(argv[i], "--width")){
 			if(i+1 < argc){
 				i++;
-				w = (int) strtol(argv[2], NULL, 10);
+				w = (int) strtol(argv[i], NULL, 10);
 			}
 		}else if(!strcmp(argv[i], "-r") || !strcmp(argv[i], "--robot")){
 			robot = true;
 			if(i+1 < argc){
 				i++;
 				lag.tv_nsec = 1e8*strtof(argv[i], NULL);
+			}
+		}else if(!strcmp(argv[i], "-a") || !strcmp(argv[i], "--algorithm")){
+			if(i+1 < argc){
+				i++;
+				if(strcmp(argv[i], "b") == 0){
+					alg = BRUTE;
+				}else if(strcmp(argv[i], "s") == 0){
+					alg = SIMUL;
+				}
 			}
 		}else{
 			seed = (int) strtol(argv[i], NULL, 10);
@@ -70,9 +83,10 @@ int main(int argc, char *argv[]){
 	}
 
 	//Data instanciation
+	srand(seed);
 	start = new_yx(rand()%h, rand()%w);
 	Board *b = new_board(h, w, start);
-	int dist = gen_maze(b, seed);
+	int to_end = gen_maze(b, alg);
 	Player *plr = new_player(b->start);
 	print_board(ui, b);
 	print_player(ui, plr);
@@ -95,10 +109,15 @@ int main(int argc, char *argv[]){
 		move_player(ui, b, plr, dir);
 	}
 	ui_terminate(ui);
-	printf("Steps taken: %d\n", plr->nb_steps);
-	printf("Minimal possible distance: %d\n", dist);
-	printf("%.1f%% excess\n",  100*(plr->nb_steps - dist)/(1.0*dist));
-	free(plr);
+	printf("You have taken %d steps to leave the labyrinth.\n", plr->nb_steps);
+	printf("It was possible in %d steps.\n", to_end);
+	printf("This means you have taken %.1f%% more steps than was necessary.\n",  100*(plr->nb_steps - to_end)/(1.0*to_end));
+
+	printf("\nBoard size: %d(h) × %d(w) = %d cells\n", b->h, b->w, b->h*b->w);
+	printf("Min. path rate: %.2f%%\n", (to_end*100.0)/(b->h*b->w));
+	printf("Seed: %d\n", seed);
+	free_player(plr);
+	free_board(b);
 	return EXIT_SUCCESS;
 }
 

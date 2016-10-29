@@ -12,7 +12,7 @@ in the beginning of `text_ui.h`, and then compile and execute the game.
 How to play
 -----------
 
-You start in the top-left corner, and win when you arrive in the green cell. Use
+You start in the green cell, and win when you arrive in the red cell. Use
 `t`, `s`, `r`, `n` to move for LEFT, DOWN, UP, RIGHT, or the arrow keys.
 
 A trace is left every hundred steps.

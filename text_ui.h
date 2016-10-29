@@ -19,12 +19,12 @@
  */
 
 ///\brief Names for the color pairs
-enum{
+typedef enum {
 	CP_DEF,
 	CP_WALL,
 	CP_PLAYER,
 	CP_END
-}CP_name;
+} CP_name;
 
 ///\defgroup controls_text_ui_gp Key Bindings in the Text UI
 ///\{
@@ -32,7 +32,6 @@ static const int CTRLS_LEFT[]  = {'t', KEY_LEFT};
 static const int CTRLS_DOWN[]  = {'s', KEY_DOWN};
 static const int CTRLS_UP[]    = {'r', KEY_UP};
 static const int CTRLS_RIGHT[] = {'n', KEY_RIGHT};
-static const int CTRLS_OK[]    = {' ', '\n'};
 static const int CTRLS_QUIT[]  = {'q', 'q'};
 ///\}
 
@@ -55,6 +54,7 @@ void print_board(UI *, Board *);
 //Player-related
 void erase_player(UI *, Player *);
 void print_player(UI *, Player *);
+void erase_fill(UI *, Yx, Direction);
 Direction get_user_input(UI *);
 void move_player(UI *, Board *, Player *, Direction);
 
