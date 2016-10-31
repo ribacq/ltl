@@ -25,7 +25,7 @@ UI *ui_init(){
 	init_pair(CP_DEF,	COLOR_WHITE,	COLOR_WHITE);
 	init_pair(CP_WALL,	COLOR_BLACK,	COLOR_BLACK);
 	init_pair(CP_PLAYER,	COLOR_WHITE,	COLOR_BLUE);
-	init_pair(CP_END,	COLOR_YELLOW,	COLOR_RED);
+	init_pair(CP_END,	COLOR_WHITE,	COLOR_RED);
 
 	//Display
 	wrefresh(ui->main_win);
@@ -48,12 +48,18 @@ void ui_clear(UI *ui){
 	return;
 }
 
+///\brief Waits for n miliseconds
+void msleep(float n){
+	struct timespec lag;
+	lag.tv_sec = 0;
+	lag.tv_nsec = n*1e6;
+	nanosleep(&lag, NULL);
+	return;
+}
+
 //Board
 ///\brief Prints board properly
 void print_board(UI *ui, Board *b){
-	//Clean and set attributes
-	ui_clear(ui);
-
 	//Walls defined in Board::cells
 	int i, j;
 	for(i=0; i<b->h; i++){
@@ -136,8 +142,8 @@ void erase_player(UI* ui, Player *plr){
 
 ///\brief Prints Player from screen
 void print_player(UI* ui, Player *plr){
-	wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER));
-	mvwprintw(ui->main_win, 2*plr->c.y+1, 3*plr->c.x+1, "%02d", plr->nb_steps%100);
+	wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER) | A_BOLD);
+	mvwprintw(ui->main_win, 2*plr->c.y+1, 3*plr->c.x+1, "::");
 	return;
 }
 

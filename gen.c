@@ -7,14 +7,26 @@
  * \param alg choice of algorithm
  * \return the minimal distance from Board::start to Board::end
  */
-int gen_maze(Board *b, GenAlgo alg){
+int gen_maze(UI *ui, float disp_lag, Board *b, GenAlgo alg){
 	int end_dist = 0;
+	int **distances = (int **) calloc(b->h, sizeof(int *));
+	int i, j;
 	switch(alg){
 	case BRUTE:
-		brute_gen(b, b->start, &(b->end), &end_dist);
+		brute_gen(ui, disp_lag, b, b->start, &(b->end), &end_dist);
 		break;
 	case SIMUL:
-		simul_gen(b, b->start, &(b->end), &end_dist);
+		for(i=0; i<b->h; i++){
+			distances[i] = (int *) calloc(b->w, sizeof(int));
+			for(j=0; j<b->w; j++){
+				distances[i][j] = 0;
+			}
+		}
+		simul_gen(ui, disp_lag, b, b->start, &(b->end), &end_dist, distances);
+		for(i=0; i<b->h; i++){
+			free(distances[i]);
+		}
+		free(distances);
 		break;
 	}
 	return end_dist;
@@ -23,6 +35,8 @@ int gen_maze(Board *b, GenAlgo alg){
 /**
  * \brief A very simple generation algorithm
  *
+ * \param *ui A user interface on which to display the constructing board
+ * \param disp_lag interval in milliseconds for the display
  * \param *b Pointer to the Board
  * \param c Cell from which to go
  * \param end Coordinates for Board::end. The farthest cell from start.
@@ -34,7 +48,13 @@ int gen_maze(Board *b, GenAlgo alg){
  * But the code is short and it ensures that no cell is left alone and that
  * there is no loop.
  */
-void brute_gen(Board *b, Yx c, Yx *end_cell, int *end_dist){
+void brute_gen(UI *ui, float disp_lag, Board *b, Yx c, Yx *end_cell, int *end_dist){
+	//Print WIP board
+	if(disp_lag > 0){
+		print_board(ui, b);
+		msleep(disp_lag);
+	}
+
 	//Farthest cells in every direction
 	Yx max_cell = c;
 	Yx test_cell = max_cell;
@@ -48,7 +68,7 @@ void brute_gen(Board *b, Yx c, Yx *end_cell, int *end_dist){
 		if(!tested[dir] && exists(b, get_neigh(c, dir)) && is_alone(b, get_neigh(c, dir))){
 			set_wall(b, c, dir, false);
 			test_dist++;
-			brute_gen(b, get_neigh(c, dir), &test_cell, &test_dist);
+			brute_gen(ui, disp_lag, b, get_neigh(c, dir), &test_cell, &test_dist);
 			if(test_dist > max_dist){
 				max_dist = test_dist;
 				max_cell = test_cell;
@@ -67,10 +87,13 @@ void brute_gen(Board *b, Yx c, Yx *end_cell, int *end_dist){
 /**
  * \brief Another recursive algorithm
  *
+ * \param *ui A user interface on which to display the constructing board
+ * \param disp_lag interval in milliseconds for the display
  * \param *b The board to set
  * \param c The cell from which to start
  * \param *end_cell where to store the farthest found cell
  * \param *end_dist where to store the distance to end_cell
+ * \param **distances an array of size [b->h][b->w] in which to store the distances to all cells. It is transmitted recursively. Before the first call, initialize it to all 0.
  *
  * During the first phase, branches are calculated simultaneously. The number of
  * simultaneous robots is limited to 4. If it increases, the different robots
@@ -87,7 +110,7 @@ void brute_gen(Board *b, Yx c, Yx *end_cell, int *end_dist){
  * are often very long and difficult to recognize at first glimpse.
  *
  */
-void simul_gen(Board *b, Yx c, Yx *end_cell, int *end_dist){
+void simul_gen(UI *ui, float disp_lag, Board *b, Yx c, Yx *end_cell, int *end_dist, int **distances){
 	//A robot mining through the walls (chained list)
 	typedef struct _simul_gen_robot_struct{
 		Yx c;
@@ -103,18 +126,12 @@ void simul_gen(Board *b, Yx c, Yx *end_cell, int *end_dist){
 
 	//The string of robots
 	int nb_robots = 1;
+	const int max_robots = 3;
 	Robot *last = first;
 
 	//Variables for the end
 	Yx max_cell = first->c;
 	int max_dist = first->dist;
-	int distances[b->h][b->w];
-	int i, j;
-	for(i=0; i<b->h; i++){
-		for(j=0; j<b->w; j++){
-			distances[i][j] = 0;
-		}
-	}
 	
 	//Variables for every single test applied on the robot
 	bool tested[4];
@@ -125,6 +142,12 @@ void simul_gen(Board *b, Yx c, Yx *end_cell, int *end_dist){
 	entry->next = first;
 	Robot *cur = entry;
 	while(nb_robots > 0){
+		//Print WIP board
+		if(disp_lag > 0){
+			print_board(ui, b);
+			msleep(disp_lag);
+		}
+
 		//Test current robot
 		tested[RIGHT] = false;
 		tested[UP]    = false;
@@ -132,7 +155,7 @@ void simul_gen(Board *b, Yx c, Yx *end_cell, int *end_dist){
 		tested[DOWN]  = false;
 		dir = rand()%4;
 		while(!tested[RIGHT] || !tested[UP] || !tested[LEFT] || !tested[DOWN]){
-			if(!tested[dir] && is_alone(b, get_neigh(cur->next->c, dir)) && (nb_robots<4)){
+			if(!tested[dir] && is_alone(b, get_neigh(cur->next->c, dir)) && (nb_robots<=max_robots)){
 				//Add a new robot in next pos and crush one wall
 				set_wall(b, cur->next->c, dir, false);
 				Robot *tmp = (Robot *) malloc(sizeof(Robot));
@@ -165,6 +188,7 @@ void simul_gen(Board *b, Yx c, Yx *end_cell, int *end_dist){
 	Direction p2_dir;
 	int p2_dist;
 	bool p2_linked;
+	int i, j;
 	for(i=0; i<b->h; i++){
 		for(j=0; j<b->w; j++){
 			p2_cur = new_yx(i, j);
@@ -176,7 +200,7 @@ void simul_gen(Board *b, Yx c, Yx *end_cell, int *end_dist){
 						set_wall(b, p2_cur, p2_dir, false);
 						p2_linked = true;
 						p2_dist = 1+distances[get_neigh(p2_cur, p2_dir).y][get_neigh(p2_cur, p2_dir).x];
-						simul_gen(b, p2_cur, &p2_cur, &p2_dist);
+						simul_gen(ui, disp_lag, b, p2_cur, &p2_cur, &p2_dist, distances);
 						if(p2_dist > max_dist){
 							max_dist = p2_dist;
 							max_cell = p2_cur;

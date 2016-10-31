@@ -76,10 +76,11 @@ void free_board(Board *b){
 }
 
 ///\brief Player constructor
-Player *new_player(Yx start_c){
+Player *new_player(Yx start_c, bool start_robot){
 	Player *plr = (Player*) malloc(sizeof(Player));
 	plr->c = start_c;
 	plr->nb_steps = 0;
+	plr->robot = start_robot;
 	return plr;
 }
 

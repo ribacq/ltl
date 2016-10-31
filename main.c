@@ -31,6 +31,8 @@
 int main(int argc, char *argv[]){
 	//Parameters that can be modified with the command-line parameters
 	UI* ui = ui_init();
+	ui_clear(ui);
+	float disp_lag = 1;
 	
 	//Board height and width
 	int h, w;
@@ -40,9 +42,7 @@ int main(int argc, char *argv[]){
 	
 	//Played by human or robot and robot lag
 	bool robot = false;
-	struct timespec lag;
-	lag.tv_sec = 0;
-	lag.tv_nsec = 1e8;
+	float robot_lag = 100;
 	
 	//Board random seed and algorithm
 	int seed = time(NULL);
@@ -50,32 +50,45 @@ int main(int argc, char *argv[]){
 	
 	//Read throught parameters
 	int i=1;
+	char *conv_test;
 	while(i<argc){
 		if(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--height")){
 			if(i+1 < argc){
-				i++;
-				h = (int) strtol(argv[i], NULL, 10);
+				strtol(argv[i+1], &conv_test, 10);
+				if(*conv_test == '\0'){
+					i++;
+					h = (int) strtol(argv[i], NULL, 10);
+				}
 			}
 		}else if(!strcmp(argv[i], "-w") || !strcmp(argv[i], "--width")){
 			if(i+1 < argc){
-				i++;
-				w = (int) strtol(argv[i], NULL, 10);
+				strtol(argv[i+1], &conv_test, 10);
+				if(*conv_test == '\0'){
+					i++;
+					w = (int) strtol(argv[i], NULL, 10);
+				}
 			}
 		}else if(!strcmp(argv[i], "-r") || !strcmp(argv[i], "--robot")){
 			robot = true;
 			if(i+1 < argc){
-				i++;
-				lag.tv_nsec = 1e8*strtof(argv[i], NULL);
-			}
-		}else if(!strcmp(argv[i], "-a") || !strcmp(argv[i], "--algorithm")){
-			if(i+1 < argc){
-				i++;
-				if(strcmp(argv[i], "b") == 0){
-					alg = BRUTE;
-				}else if(strcmp(argv[i], "s") == 0){
-					alg = SIMUL;
+				strtof(argv[i+1], &conv_test);
+				if(*conv_test == '\0'){
+					i++;
+					robot_lag = strtof(argv[i], NULL);
 				}
 			}
+		}else if(!strcmp(argv[i], "-l") || !strcmp(argv[i], "--lag")){
+			if(i+1 < argc){
+				strtof(argv[i+1], &conv_test);
+				if(*conv_test == '\0'){
+					i++;
+					disp_lag = strtof(argv[i], NULL);
+				}
+			}
+		}else if(!strcmp(argv[i], "-b") || !strcmp(argv[i], "--brute")){
+			alg = BRUTE;
+		}else if(!strcmp(argv[i], "-s") || !strcmp(argv[i], "--simul")){
+			alg = SIMUL;
 		}else{
 			seed = (int) strtol(argv[i], NULL, 10);
 		}
@@ -86,25 +99,27 @@ int main(int argc, char *argv[]){
 	srand(seed);
 	start = new_yx(rand()%h, rand()%w);
 	Board *b = new_board(h, w, start);
-	int to_end = gen_maze(b, alg);
-	Player *plr = new_player(b->start);
+	int to_end = gen_maze(ui, disp_lag, b, alg);
+	Player *plr = new_player(b->start, robot);
 	print_board(ui, b);
 	print_player(ui, plr);
-	Direction dir = RIGHT;
-	Direction next = dir;
+
+	//Main loop
+	Direction dir = LEFT;
 	while(ui->signal == CONTINUE){
-		if(!robot){
+		if(plr->robot){
+			//Robot
+			dir = opposite_dir(dir);
+			i = 0;
+			do{
+				dir = (dir == ERROR-1) ? RIGHT : dir+1;
+				i++;
+			}while(i<4 && get_wall(b, plr->c, dir));
+			msleep(robot_lag);
+			get_user_input(ui);
+		}else{
 			//Human
 			dir = get_user_input(ui);
-		}else{
-			//Robot
-			next = opposite_dir(dir);
-			do{
-				next = (next == ERROR-1) ? RIGHT : next+1;
-			}while(get_wall(b, plr->c, next) && next != opposite_dir(dir));
-			dir = next;
-			nanosleep(&lag, NULL);
-			get_user_input(ui);
 		}
 		//Make move
 		move_player(ui, b, plr, dir);

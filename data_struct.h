@@ -44,8 +44,9 @@ typedef struct{
 	Yx c; ///< \brief Coordinates
 	int nb_steps; ///< \brief Number of steps already taken
 	char str[2]; ///< \brief Characters to be printed
+	bool robot; ///< \brief If the player is not human
 } Player;
-Player *new_player(Yx);
+Player *new_player(Yx, bool);
 void free_player(Player *);
 
 void set_wall(Board *, Yx, Direction, bool);

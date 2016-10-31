@@ -10,7 +10,7 @@ all: ${OBJ}
 	${CC} ${CFLAGS} ${LIBS} -o ${OUT} ${OBJ}
 
 data_struct.o:  data_struct.h
-gen.o:          data_struct.h gen.h
+gen.o:          text_ui.h data_struct.h gen.h
 text_ui.o:	text_ui.h data_struct.h
 main.o:		text_ui.h data_struct.h gen.h
 

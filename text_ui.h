@@ -8,6 +8,8 @@
 
 #include <ncurses.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
 #include "data_struct.h"
 
 /**
@@ -48,6 +50,8 @@ UI *ui_init();
 void ui_terminate(UI *);
 void ui_clear(UI *);
 ///\}
+
+void msleep(float);
 
 //Board-related
 void print_board(UI *, Board *);
