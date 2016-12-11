@@ -2,7 +2,7 @@
 
 OBJ = main.o text_ui.o data_struct.o gen.o
 CC = gcc
-LIBS = -lncurses -lm
+LIBS = -lncurses
 CFLAGS = -Wall
 OUT = ltl.out
 

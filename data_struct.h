@@ -26,7 +26,6 @@ typedef struct{
 	int x; ///< \brief Column number
 } Yx;
 Yx new_yx(int, int);
-Yx get_neigh(Yx, Direction);
 
 ///\brief Board data structure
 typedef struct{
@@ -38,6 +37,7 @@ typedef struct{
 } Board;
 Board *new_board(const int, const int, Yx);
 void free_board(Board *);
+Yx get_neigh(Board *, Yx, Direction);
 
 ///\brief Player data structure
 typedef struct{

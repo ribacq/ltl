@@ -62,44 +62,39 @@ void msleep(float n){
 void print_board(UI *ui, Board *b){
 	//Walls defined in Board::cells
 	int i, j;
+	CP_name color;
 	for(i=0; i<b->h; i++){
 		for(j=0; j<b->w; j++){
+			//Cell up-left corner
 			wattrset(ui->main_win, COLOR_PAIR(CP_WALL));
 			mvwaddch(ui->main_win, 2*i, 3*j, ' ');
-			if(b->cells[i][j].top){
-				wattrset(ui->main_win, COLOR_PAIR(CP_WALL));
-			}else{
-				wattrset(ui->main_win, COLOR_PAIR(CP_DEF));
-			}
+
+			//Cell up wall
+			color = get_wall(b, new_yx(i, j), UP) ? CP_WALL : CP_DEF;
+			wattrset(ui->main_win, COLOR_PAIR(color));
 			mvwprintw(ui->main_win, 2*i, 3*j+1, "  ");
 			
-			if(b->cells[i][j].left){
-				wattrset(ui->main_win, COLOR_PAIR(CP_WALL));
-			}else{
-				wattrset(ui->main_win, COLOR_PAIR(CP_DEF));
-			}
+			//Cell left wall
+			color = get_wall(b, new_yx(i, j), LEFT) ? CP_WALL : CP_DEF;
+			wattrset(ui->main_win, COLOR_PAIR(color));
 			mvwaddch(ui->main_win, 2*i+1, 3*j, ' ');
-
-			if(!is_alone(b, new_yx(i, j))){
-				wattrset(ui->main_win, COLOR_PAIR(CP_DEF));
-			}else{
-				wattrset(ui->main_win, COLOR_PAIR(CP_WALL));
-			}
+			
+			//Cell content
+			color = is_alone(b, new_yx(i, j)) ? CP_WALL : CP_DEF;
+			wattrset(ui->main_win, COLOR_PAIR(color));
 			mvwprintw(ui->main_win, 2*i+1, 3*j+1, "  ");
 		}
-		//Wall on right of board
-		wattrset(ui->main_win, COLOR_PAIR(CP_WALL));
-		mvwaddch(ui->main_win, 2*i, 3*b->w, ' ');
+		//Cell right wall on last column
+		color = get_wall(b, new_yx(i, 0), LEFT) ? CP_WALL : CP_DEF;
+		wattrset(ui->main_win, COLOR_PAIR(color));
 		mvwaddch(ui->main_win, 2*i+1, 3*b->w, ' ');
 	}
-
-	//Wall down of board
+	//Cell down wall on last line
 	for(j=0; j<b->w; j++){
-		mvwprintw(ui->main_win, 2*b->h, 3*j, "   ");
+		color = get_wall(b, new_yx(0, j), UP) ? CP_WALL : CP_DEF;
+		wattrset(ui->main_win, COLOR_PAIR(color));
+		mvwprintw(ui->main_win, 2*b->h, 3*j+1, "  ");
 	}
-
-	//Bottom-right corner
-	mvwaddch(ui->main_win, 2*b->h, 3*b->w, ' ');
 
 	//Mark goal
 	wattrset(ui->main_win, COLOR_PAIR(CP_END));
@@ -130,11 +125,10 @@ Direction get_user_input(UI *ui){
 
 ///\brief Erases Player from screen
 void erase_player(UI* ui, Player *plr){
+	wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER));
 	if(plr->nb_steps % 100){
-		wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER));
 		mvwprintw(ui->main_win, 2*plr->c.y+1, 3*plr->c.x+1, "  ");
 	}else{
-		wattrset(ui->main_win, COLOR_PAIR(CP_PLAYER));
 		mvwprintw(ui->main_win, 2*plr->c.y+1, 3*plr->c.x+1, "%02d", (plr->nb_steps/100)%100);
 	}
 	return;
@@ -172,31 +166,14 @@ void erase_fill(UI *ui, Yx c, Direction dir){
 
 ///\brief Moves Player on screen
 void move_player(UI *ui, Board *b, Player *plr, Direction dir){
-	//Set direction coordinates
-	Yx d = new_yx(0, 0);
-	switch(dir){
-	case LEFT:
-		d.x--;
-		break;
-	case DOWN:
-		d.y++;
-		break;
-	case UP:
-		d.y--;
-		break;
-	case RIGHT:
-		d.x++;
-		break;
-	default:
-		break;
-	}
-
 	//Move
 	if(!get_wall(b, plr->c, dir)){
 		erase_player(ui, plr);
 		erase_fill(ui, plr->c, dir);
-		plr->c.y += d.y;
-		plr->c.x += d.x;
+		plr->c = get_neigh(b, plr->c, dir);
+		if(((dir == LEFT) && (plr->c.x == b->w-1)) || ((dir == DOWN) && (plr->c.y == 0)) || ((dir == UP) && (plr->c.y == b->h-1)) || ((dir == RIGHT) && (plr->c.x == 0))){
+			erase_fill(ui, plr->c, opposite_dir(dir));
+		}
 		plr->nb_steps++;
 		print_player(ui, plr);
 	}
