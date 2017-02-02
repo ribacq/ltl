@@ -31,17 +31,6 @@ int gen_maze(UI *ui, float disp_lag, Board *b, GenAlgo alg){
 		free(distances);
 		break;
 	}
-	/*/
-	int i, j;
-	for(i=0; i<b->h; i++){
-		for(j=0; j<b->w; j++){
-			set_wall(b, new_yx(i, j), LEFT, false);
-			set_wall(b, new_yx(i, j), UP, false);
-		}
-	}
-	b->start = new_yx(0, 0);
-	b->end = new_yx(b->h-1, b->w-1);
-	//*/
 	return end_dist;
 }
 
@@ -180,6 +169,7 @@ void simul_gen(UI *ui, float disp_lag, Board *b, Yx c, Yx *end_cell, int *end_di
 				last->next = tmp;
 				last = tmp;
 				if(tmp->dist > max_dist){
+					//Possibly save a new end cell
 					max_dist = tmp->dist;
 					max_cell = tmp->c;
 				}
