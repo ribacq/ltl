@@ -130,7 +130,7 @@ void simul_gen(UI *ui, float disp_lag, Board *b, Yx c, Yx *end_cell, int *end_di
 
 	//The string of robots
 	int nb_robots = 1;
-	const int max_robots = 1;
+	const int MAX_ROBOTS = 1;
 	Robot *last = first;
 
 	//Variables for the end
@@ -158,7 +158,7 @@ void simul_gen(UI *ui, float disp_lag, Board *b, Yx c, Yx *end_cell, int *end_di
 		tested[DOWN]  = false;
 		dir = rand()%4;
 		while((cur->next->energy > 0) && (!tested[RIGHT] || !tested[UP] || !tested[LEFT] || !tested[DOWN])){
-			if(!tested[dir] && is_alone(b, get_neigh(b, cur->next->c, dir)) && (nb_robots<=max_robots)){
+			if(!tested[dir] && is_alone(b, get_neigh(b, cur->next->c, dir)) && (nb_robots<=MAX_ROBOTS)){
 				//Add a new robot in next pos and crush one wall
 				set_wall(b, cur->next->c, dir, false);
 				Robot *tmp = (Robot *) malloc(sizeof(Robot));

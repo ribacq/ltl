@@ -58,19 +58,15 @@ void free_board(Board *b){
 Yx get_neigh(Board *b, Yx c, Direction dir){
 	switch(dir){
 	case RIGHT:
-		//c.x++;
 		c.x = (c.x+1)%b->w;
 		break;
 	case UP:
-		//c.y--;
 		c.y = (c.y-1+b->h)%b->h;
 		break;
 	case LEFT:
-		//c.x--;
 		c.x = (c.x-1+b->w)%b->w;
 		break;
 	case DOWN:
-		//c.y++;
 		c.y = (c.y+1)%b->h;
 		break;
 	default:

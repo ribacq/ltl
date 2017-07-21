@@ -14,5 +14,3 @@ void brute_gen(UI *, float, Board *, Yx, Yx *, int *);
 void simul_gen(UI *, float, Board *, Yx, Yx *, int *, int **);
 int gen_maze(UI *, float, Board *, GenAlgo);
 
-void straight_path(Board *, Yx, Yx);
-void angle_path(Board *, Yx, Yx);

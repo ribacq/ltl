@@ -1,4 +1,4 @@
-#Chinese Checkers Makefile
+#ltl Makefile
 
 OBJ = main.o text_ui.o data_struct.o gen.o
 CC = gcc
